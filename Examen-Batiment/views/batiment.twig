@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Niveaux Non Bâtis</title>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+  <h1>Liste des Niveaux Non Bâtis</h1>
+
+  <!-- Formulaire avec champ et boutons -->
+  <div>
+    <label for="idNiveau">Id Niveau :</label>
+    <input type="text" id="idNiveau" placeholder="Entrez l'ID du niveau">
+    <button id="constructButton">Construire</button>
+    <button id="btnSomme">Somme</button>
+	<button id="nbrBatiment"> Nbr </button>
+  </div>
+
+  <!-- Liste des niveaux non bâtis -->
+  <button id="getLevels">Afficher les Niveaux Non Bâtis</button>
+  <ul id="levelsList"></ul>
+
+
+  <p id="resultat">La somme des niveaux est :</p>
+
+  <script>
+    const socket = io();
+
+	socket.on("msg", (data) => {
+p = document.createElement("p")
+p.innerText = data
+document.body.append(p)
+})
+
+    // Fonction pour afficher la liste des niveaux non bâtis
+    function fetchNonBuiltLevels() {
+      socket.emit('getNonBuiltLevels'); // Demande au serveur
+    }
+
+    // Afficher les niveaux reçus
+    socket.on('nonBuiltLevels', (levels) => {
+      const levelsList = document.getElementById('levelsList');
+      levelsList.innerHTML = ''; // Vider la liste
+
+      levels.forEach((level) => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `
+          ID: ${level._id}, 
+          Nom: ${level.nom}, 
+          Nombre de Chambres: ${level.nbr_chambre}, 
+          État de Construction: ${level.etat_construction}, 
+          ID du Bâtiment: ${level.id_batiment}
+        `;
+        levelsList.appendChild(listItem);
+      });
+    });
+
+    // Bouton pour afficher les niveaux
+    document.getElementById('getLevels').addEventListener('click', fetchNonBuiltLevels);
+
+    // Action du bouton "Construire"
+    document.getElementById('constructButton').addEventListener('click', () => {
+      const idNiveau = document.getElementById('idNiveau').value;
+      if (idNiveau) {
+        socket.emit('constructLevel', { id: idNiveau }); // Demande de construction
+      } else {
+        alert('Veuillez entrer un ID de niveau.');
+      }
+    });
+
+    // Confirmation de la construction et mise à jour automatique
+    socket.on('levelConstructed', (message) => {
+      alert(message); // Message de succès
+      fetchNonBuiltLevels(); // Recharger la liste
+    });
+
+
+
+
+
+
+
+
+
+
+
+// Gestion du clic sur le bouton "Somme"
+    document.getElementById('btnSomme').addEventListener('click', () => {
+      socket.emit('calculerSomme'); // Envoyer l'événement au serveur
+    });
+
+    // Recevoir le résultat de la somme
+    socket.on('sommeResultat', (somme) => {
+      document.getElementById('resultat').innerText = `La somme des niveaux est : ${somme}`;
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Gestion du clic sur le bouton "Somme"
+  document.getElementById('nbrBatiment').addEventListener('click', () => {
+    socket.emit('calculerNombre'); // Envoyer l'événement au serveur
+  });
+
+  // Recevoir le résultat du nombre de bâtiments
+  socket.on('nombreResultat', (nombre) => {
+    document.getElementById('resultat').innerText = `Le nombre de bâtiments est : ${nombre}`;
+  });
+
+
+
+
+
+
+    // Gestion des erreurs
+    socket.on('error', (message) => {
+      alert(message);
+    });
+
+
+
+
+
+
+  </script>
+</body>
+</html>
